@@ -1,10 +1,13 @@
 <template>
-  <div class="login">
-    <h2>Авторизация</h2>
+  <div class="form-container">
+    <h2 class="form-title">Авторизация</h2>
     <form @submit.prevent="handleLogin">
       <input v-model="email" type="email" placeholder="Email" required>
       <input v-model="password" type="password" placeholder="Пароль" required>
-      <button type="submit">Войти</button>
+      <div v-if="error" class="error">{{ error }}</div>
+      <button type="submit" :disabled="loading">
+        {{ loading ? 'Загрузка...' : 'Войти' }}
+      </button>
     </form>
   </div>
 </template>
@@ -14,22 +17,36 @@ export default {
   data() {
     return {
       email: '',
-      password: ''
+      password: '',
+      loading: false,
+      error: null
     }
   },
   methods: {
     async handleLogin() {
-      // Заглушка для API
+      this.loading = true
+      this.error = null
+
       try {
-        await this.$store.dispatch('auth/login', {
+        await this.$store.dispatch('login', {
           email: this.email,
           password: this.password
-        });
-        this.$router.push('/feed');
+        })
+        this.$router.push('/feed')
       } catch (error) {
-        console.error(error);
+        this.error = error
+      } finally {
+        this.loading = false
       }
     }
   }
 }
 </script>
+
+<style scoped>
+.error {
+  color: #e74c3c;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+</style>

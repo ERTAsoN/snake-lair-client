@@ -1,14 +1,16 @@
 <template>
-  <div class="registration">
-    <h2>Регистрация</h2>
+  <div class="form-container">
+    <h2 class="form-title">Регистрация</h2>
     <form @submit.prevent="handleSubmit">
       <input v-model="form.firstName" placeholder="Имя" required>
       <input v-model="form.lastName" placeholder="Фамилия" required>
       <input v-model="form.email" type="email" placeholder="Email" required>
       <input v-model="form.password" type="password" placeholder="Пароль" required>
       <input v-model="form.confirmPassword" type="password" placeholder="Подтверждение пароля" required>
-      <input type="file" @change="handleAvatarUpload">
-      <button type="submit">Зарегистрироваться</button>
+      <div v-if="error" class="error">{{ error }}</div>
+      <button type="submit" :disabled="loading">
+        {{ loading ? 'Загрузка...' : 'Зарегистрироваться' }}
+      </button>
     </form>
   </div>
 </template>
@@ -23,28 +25,37 @@ export default {
         email: '',
         password: '',
         confirmPassword: '',
-        avatar: null
-      }
+      },
+      loading: false,
+      error: null
     }
   },
   methods: {
-    handleAvatarUpload(e) {
-      this.form.avatar = e.target.files[0];
-    },
     async handleSubmit() {
       if (this.form.password !== this.form.confirmPassword) {
-        alert('Пароли не совпадают!');
-        return;
+        this.error = 'Пароли не совпадают!'
+        return
       }
 
-      // Заглушка для API
+      this.loading = true
+      this.error = null
+
       try {
-        await this.$store.dispatch('auth/register', this.form);
-        this.$router.push('/login');
+        await this.$store.dispatch('register', this.form)
+        this.$router.push('/feed')
       } catch (error) {
-        console.error(error);
+        this.error = error
+      } finally {
+        this.loading = false
       }
     }
   }
 }
 </script>
+
+<style scoped>
+.error {
+  color: red;
+  margin: 10px 0;
+}
+</style>
