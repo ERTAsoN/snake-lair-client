@@ -4,6 +4,11 @@
     <div v-else-if="error" class="error">{{ error }}</div>
 
     <div v-else class="posts-list">
+      <div class="page-header">
+        <h1>Лента</h1>
+        <button class="create-post-btn" @click="showModal = true">+ Создать пост</button>
+      </div>
+
       <div v-for="post in formattedPosts" :key="post.id" class="post-card">
         <div class="post-header">
           <router-link :to="post.user.profileLink" class="user-info">
@@ -15,7 +20,7 @@
 
         <div class="post-content">
           <h3 class="post-title">{{ post.title }}</h3>
-          <p class="post-description">{{ post.description }}</p>
+          <pre class="post-description">{{ post.description }}</pre>
           <img v-if="post.photo" :src="post.photo" class="post-photo">
         </div>
 
@@ -33,11 +38,26 @@
         </div>
       </div>
     </div>
+
+    <CreatePostModal
+        :isOpen="showModal"
+        @close="showModal = false"
+    />
   </div>
 </template>
 
 <script>
+import CreatePostModal from '@/components/CreatePostModal.vue'
+
 export default {
+  components: {
+    CreatePostModal
+  },
+  data() {
+    return {
+      showModal: false
+    }
+  },
   methods: {
     async toggleLike(postId) {
       try {
@@ -60,6 +80,9 @@ export default {
   },
   async created() {
     await this.$store.dispatch('fetchPosts')
+  },
+  mounted() {
+    this.showModal = false
   }
 }
 </script>
@@ -199,5 +222,26 @@ export default {
   background: #ffeaea;
   border-color: #ff6b6b;
   color: #ff6b6b;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.create-post-btn {
+  background: #27ae60;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.create-post-btn:hover {
+  background: #219a52;
 }
 </style>

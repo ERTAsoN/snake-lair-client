@@ -42,7 +42,14 @@ export default {
 
       try {
         await this.$store.dispatch('register', this.form)
-        this.$router.push('/feed')
+        // Даём время сохранить данные в хранилище и localStorage
+        setTimeout(() => {
+          if (this.$store.state.auth.currentUser?.id) {
+            this.$router.push('/feed')
+          } else {
+            throw new Error('Registration failed: no user ID received')
+          }
+        }, 100)
       } catch (error) {
         this.error = error
       } finally {

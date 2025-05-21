@@ -22,19 +22,19 @@
       <aside v-if="isAuthenticated" class="sidebar">
         <nav class="sidebar-nav">
           <router-link to="/feed" class="nav-item">
-            <img src="" alt="Лента" class="nav-icon">
+            <img src="./assets/feed.png" alt="Лента" class="nav-icon">
             <span>Лента</span>
           </router-link>
           <router-link to="/messages" class="nav-item">
-            <img src="" alt="Сообщения" class="nav-icon">
+            <img src="./assets/messages.png" alt="Сообщения" class="nav-icon">
             <span>Сообщения</span>
           </router-link>
           <router-link to="/friends" class="nav-item">
-            <img src="" alt="Друзья" class="nav-icon">
+            <img src="./assets/users.png" alt="Пользователи" class="nav-icon">
             <span>Друзья</span>
           </router-link>
           <router-link :to="`/profile/${currentUser.id}`" class="nav-item">
-            <img src="" alt="Профиль" class="nav-icon">
+            <img src="./assets/profile.png" alt="Профиль" class="nav-icon">
             <span>Профиль</span>
           </router-link>
         </nav>
@@ -281,7 +281,7 @@ body {
 
 .nav-item.router-link-exact-active {
   background: #42b98320;
-  color: #42b983;
+  color: #33984b;
   font-weight: 500;
 }
 

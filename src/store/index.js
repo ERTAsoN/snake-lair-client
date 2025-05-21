@@ -13,6 +13,8 @@ export default createStore({
           state.currentUser = user
           if (user?.id) {
             localStorage.setItem('snake_lair_user_id', user.id)
+          } else {
+            console.error('User object is missing id property:', user)
           }
         },
         SET_TOKEN(state, token) {
@@ -36,8 +38,8 @@ export default createStore({
             form.append('password', formData.password)
 
             const response = await api.post('/register', form)
-
-            commit('SET_USER', response.data.data.user)
+            console.log("Response: ", response.data)
+            commit('SET_USER', response.data.user)
             commit('SET_TOKEN', response.data.data.token)
             return true
           } catch (error) {
@@ -48,11 +50,12 @@ export default createStore({
         async login({ commit }, credentials) {
           try {
             const response = await api.post('/login', credentials)
+            console.log("Response: ", response.data)
             commit('SET_USER', response.data.data.user)
             commit('SET_TOKEN', response.data.data.token)
             return true
           } catch (error) {
-            throw error.response?.data?.message || 'Ошибка авторизации'
+            throw error.response?.message || 'Ошибка авторизации'
           }
         },
 
@@ -66,15 +69,17 @@ export default createStore({
 
           try {
             const userId = localStorage.getItem('snake_lair_user_id')
-            if (!userId) throw new Error('User ID not found')
+            if (!userId) throw new Error('User ID not found in storage')
 
+            // Исправлен путь к данным в ответе
             const response = await api.get(`/profile/${userId}`)
+            const userData = response.data.user
 
             commit('SET_USER', {
-              id: response.data.id,
-              firstName: response.data.firstName,
-              avatar: response.data.avatar,
-              email: response.data.email,
+              id: userData.id,
+              firstName: userData.firstName,
+              avatar: userData.avatar,
+              email: userData.email,
             })
           } catch (error) {
             commit('LOGOUT')
@@ -105,7 +110,7 @@ export default createStore({
                   ? { ...post, likesCount, userLiked }
                   : post
           )
-        }
+        },
       },
       actions: {
         async fetchPosts({ commit }) {
@@ -113,22 +118,26 @@ export default createStore({
           try {
             const response = await api.get('/posts')
             if (response.data.status === 'success') {
-              commit('SET_POSTS', response.data.posts.map(post => ({
-                id: post.id,
-                title: post.title,
-                description: post.description,
-                photo: post.photo,
-                created: new Date(post.created),
-                user: {
-                  id: post.user.id,
-                  name: `${post.user.firstName} ${post.user.lastName}`,
-                  avatar: post.user.avatar,
-                  profileLink: post.profileLink
-                },
-                likesCount: post.likes_count,
-                userLiked: post.user_liked,
-                comments: post.comments
-              })))
+              const sortedPosts = response.data.posts
+                  .map(post => ({
+                    id: post.id,
+                    title: post.title,
+                    description: post.description,
+                    photo: post.photo,
+                    created: new Date(post.created),  // Конвертируем в Date
+                    user: {
+                      id: post.user.id,
+                      name: `${post.user.firstName} ${post.user.lastName}`,
+                      avatar: post.user.avatar,
+                      profileLink: post.profileLink
+                    },
+                    likesCount: post.likes_count,
+                    userLiked: post.user_liked,
+                    comments: post.comments
+                  }))
+                  .sort((a, b) => b.created - a.created) // Сортировка по убыванию даты
+
+              commit('SET_POSTS', sortedPosts)
             }
           } catch (error) {
             commit('SET_ERROR', error.response?.data?.message || 'Ошибка загрузки ленты')
@@ -160,6 +169,22 @@ export default createStore({
               userLiked: originalUserLiked
             })
             throw error
+          }
+        },
+        async createPost({ commit }, formData) {
+          try {
+            commit('SET_LOADING', true)
+            const response = await api.post('/posts/create', formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            })
+
+            return response.data
+          } catch (error) {
+            throw error.response?.data?.message || 'Ошибка при создании поста'
+          } finally {
+            commit('SET_LOADING', false)
           }
         }
       },
