@@ -2,22 +2,16 @@
   <div v-if="isOpen" class="modal-overlay">
     <div class="modal">
       <button class="close-btn" @click="close">×</button>
-      <h2>Создать пост</h2>
+      <h2>Новое сообщение</h2>
 
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
-          <label>Заголовок</label>
-          <input v-model="form.title" type="text" required>
-        </div>
-
-        <div class="form-group">
-          <label>Текст поста</label>
-          <textarea v-model="form.description" required></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Изображение</label>
-          <input type="file" accept="image/*" @change="handleFileUpload">
+          <textarea
+              v-model="messageText"
+              placeholder="Введите ваше сообщение..."
+              required
+              rows="4"
+          ></textarea>
         </div>
 
         <div v-if="error" class="error-message">{{ error }}</div>
@@ -25,7 +19,7 @@
         <div class="modal-actions">
           <button type="button" class="btn-cancel" @click="close">Отмена</button>
           <button type="submit" class="btn-submit" :disabled="loading">
-            {{ loading ? 'Отправка...' : 'Опубликовать' }}
+            {{ loading ? 'Отправка...' : 'Отправить' }}
           </button>
         </div>
       </form>
@@ -34,46 +28,41 @@
 </template>
 
 <script>
+import api from '@/api'
+
 export default {
-  data() {
-    return {
-      form: {
-        title: '',
-        description: '',
-        image: null
-      },
+  props: {
+    isOpen: Boolean,
+    receiverId: {
+      type: [String, Number],
+      required: true
     }
   },
-  props: {
-    isOpen: {
-      type: Boolean,
-      required: true
+  emits: ['close', 'message-sent'],
+  data() {
+    return {
+      messageText: '',
+      loading: false,
+      error: null
     }
   },
   methods: {
     close() {
       this.$emit('close')
-    },
-    handleFileUpload(event) {
-      this.form.image = event.target.files[0]
+      this.messageText = ''
+      this.error = null
     },
     async handleSubmit() {
-      this.loading = true
-      this.error = null
-
       try {
-        const formData = new FormData()
-        formData.append('title', this.form.title)
-        formData.append('description', this.form.description)
-        if (this.form.image) {
-          formData.append('photo', this.form.image)
-        }
+        this.loading = true
+        await api.post(`/chat/send/${this.receiverId}`, {
+          message: this.messageText
+        })
 
-        await this.$store.dispatch('createPost', formData)
+        this.$emit('message-sent')
         this.close()
-        window.location.reload()
       } catch (error) {
-        this.error = error.message || 'Ошибка при создании поста'
+        this.error = error.response?.data?.message || 'Ошибка отправки сообщения'
       } finally {
         this.loading = false
       }
@@ -82,7 +71,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -100,36 +89,29 @@ export default {
   background: white;
   padding: 2rem;
   border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  position: relative;
+  width: 500px;
+  max-width: 95%;
 }
 
 .close-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+  float: right;
   font-size: 1.5rem;
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin: 1.5rem 0;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-.form-group input[type="text"],
-.form-group textarea {
+textarea {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.8rem;
   border: 1px solid #ddd;
   border-radius: 4px;
+  resize: vertical;
 }
 
 .error-message {
@@ -141,21 +123,21 @@ export default {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .btn-cancel {
-  background: #eee;
   padding: 0.5rem 1rem;
+  background: #eee;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .btn-submit {
+  padding: 0.5rem 1rem;
   background: #33984b;
   color: white;
-  padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;

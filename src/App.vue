@@ -4,7 +4,7 @@
       <div class="header-content wrapper">
         <router-link to="/" class="logo">
           <img src="./assets/logo-full.png" alt="Лого">
-          <span>Snake Lair</span>
+          <span>Змеиное Логово</span>
         </router-link>
         <nav class="nav">
           <template v-if="!isAuthenticated">
@@ -12,6 +12,7 @@
             <router-link to="/register">Регистрация</router-link>
           </template>
           <template v-else>
+            <p>{{currentUser.firstName}} {{currentUser.lastName}}</p>
             <button @click="logout" class="logout-btn">Выйти</button>
           </template>
         </nav>
@@ -29,9 +30,9 @@
             <img src="./assets/messages.png" alt="Сообщения" class="nav-icon">
             <span>Сообщения</span>
           </router-link>
-          <router-link to="/friends" class="nav-item">
+          <router-link to="/users" class="nav-item">
             <img src="./assets/users.png" alt="Пользователи" class="nav-icon">
-            <span>Друзья</span>
+            <span>Пользователи</span>
           </router-link>
           <router-link :to="`/profile/${currentUser.id}`" class="nav-item">
             <img src="./assets/profile.png" alt="Профиль" class="nav-icon">
@@ -194,13 +195,13 @@ body {
 
 .form-container input:focus {
   outline: none;
-  border-color: #42b983;
+  border-color: #33984b;
 }
 
 .form-container button {
   width: 100%;
   padding: 0.8rem;
-  background: #42b983;
+  background: #33984b;
   color: white;
   border: none;
   border-radius: 4px;
@@ -234,12 +235,6 @@ body {
   margin-right: 1rem;
 }
 
-.post-content img {
-  width: 100%;
-  border-radius: 8px;
-  margin-top: 1rem;
-}
-
 .layout {
   display: flex;
   flex: 1;
@@ -247,8 +242,6 @@ body {
 
 .sidebar {
   width: 260px;
-  background: #fff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   padding: 20px 0;
   position: fixed;
   top: 70px; /* Высота шапки */
