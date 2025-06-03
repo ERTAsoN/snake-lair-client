@@ -78,30 +78,40 @@ export default {
       this.currentImage = URL.createObjectURL(e.target.files[0])
     },
     async handleSubmit() {
-      this.loading = true
-      this.error = null
-
+      this.loading = true;
       try {
-        const formData = new FormData()
-        formData.append('title', this.form.title)
-        formData.append('description', this.form.description)
-        formData.append('_method', 'PUT')
+        const postId = this.post.id;
+        const formData = new FormData();
+        formData.append('title', this.form.title);
+        formData.append('description', this.form.description);
+        formData.append('_method', 'PUT');
 
         if (this.form.image) {
-          formData.append('photo', this.form.image)
+          formData.append('photo', this.form.image);
         }
 
-        await this.$store.dispatch('updatePost', {
-          id: this.post.id,
-          data: formData
-        })
+        // Определяем тип запроса
+        const isAdmin = this.$store.getters['isAdmin'];
+        const isOwnPost = this.post.user.id === this.$store.state.auth.currentUser.id;
 
-        this.close()
-        window.location.reload()
+        if (isAdmin && !isOwnPost) {
+          await this.$store.dispatch('adminUpdatePost', {
+            id: postId,
+            data: formData
+          });
+        } else {
+          await this.$store.dispatch('updatePost', {
+            id: postId,
+            data: formData
+          });
+        }
+
+        this.close();
+        this.$emit('updated');
       } catch (error) {
-        this.error = error.message || 'Ошибка при сохранении'
+        this.error = error.message || 'Ошибка при сохранении';
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     resetForm() {

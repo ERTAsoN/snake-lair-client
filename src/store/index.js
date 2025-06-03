@@ -1,6 +1,6 @@
 import { createStore } from 'vuex'
-import api from '../api'
 import { SERVER_URL } from "@/config";
+import api from "@/api";
 
 export default createStore({
   modules: {
@@ -9,6 +9,9 @@ export default createStore({
         currentUser: null,
         viewedUser: null,
         token: localStorage.getItem('snake_lair_token') || null
+      },
+      getters: {
+        isAdmin: (state) => state.currentUser?.role === '1'
       },
       mutations: {
         SET_USER(state, user) {
@@ -324,6 +327,32 @@ export default createStore({
             commit('SET_LOADING', false)
           }
         },
+
+        async adminDeletePost({ commit }, id) {
+          try {
+            commit('SET_LOADING', true)
+            await api.delete(`/admin/posts/${id}`)
+          } catch (error) {
+            throw error.response?.data?.message || 'Ошибка при удалении поста'
+          } finally {
+            commit('SET_LOADING', false)
+          }
+        },
+        async adminUpdatePost({ commit }, { id, data }) {
+          try {
+            commit('SET_LOADING', true)
+            const response = await api.post(`/admin/posts/${id}`, data, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            })
+            return response.data
+          } catch (error) {
+            throw error.response?.data?.message || 'Ошибка при обновлении поста'
+          } finally {
+            commit('SET_LOADING', false)
+          }
+        },
       },
       getters: {
         formattedPosts: (state) => state.feedPosts.map(post => ({
@@ -389,6 +418,41 @@ export default createStore({
             throw error
           }
         }
+      }
+    },
+    admin: {
+      namespaced: true,
+      state: {
+        users: []
+      },
+      mutations: {
+        SET_USERS(state, users) {
+          state.users = users
+        },
+        UPDATE_USER(state, updatedUser) {
+          state.users = state.users.map(user =>
+              user.id === updatedUser.id ? updatedUser : user
+          );
+        },
+      },
+      actions: {
+        async deleteUser(_, userId) {
+          try {
+            await api.delete(`/admin/users/${userId}`)
+            this.users = this.users.filter(u => u.id !== userId)
+          } catch (error) {
+            // Обработка ошибки
+          }
+        },
+        async updateUser({ commit }, { userId, data }) {
+          try {
+            const response = await api.put(`/admin/users/${userId}`, data);
+            commit('UPDATE_USER', response.data.user); // Мутация для обновления
+            return response.data;
+          } catch (error) {
+            throw error.response?.data?.message || 'Ошибка обновления пользователя';
+          }
+        },
       }
     }
   }

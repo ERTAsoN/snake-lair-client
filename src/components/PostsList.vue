@@ -31,7 +31,7 @@
               <button @click="openEditModal(post)" class="edit-btn">
                 <img class="post-action-img" src="@/assets/edit-icon.png" alt="Редактировать" />
               </button>
-              <button @click="openDeleteModal(post.id)" class="delete-btn">
+              <button @click="openDeleteModal(post)" class="delete-btn">
                 <img class="post-action-img" src="@/assets/delete-icon.png" alt="Удалить" />
               </button>
             </div>
@@ -61,7 +61,7 @@
           </button>
         </div>
 
-        <div class="comments-section">
+        <div v-if="post.comments.length > 0" class="comments-section">
           <button
               v-if="post.comments.length > 1"
               @click="toggleComments(post.id)"
@@ -108,7 +108,6 @@
         :isOpen="showEditCommentModal"
         :comment="selectedComment"
         @close="showEditCommentModal = false"
-        @comment-updated="handleCommentUpdated"
     />
 
     <DeleteCommentModal
@@ -131,7 +130,7 @@
 
     <DeletePostModal
         :isOpen="showDeleteModal"
-        :postId="selectedPostId"
+        :post="selectedPost"
         @close="showDeleteModal = false"
     />
   </div>
@@ -204,11 +203,6 @@ export default {
       if (!this.userId) return this.formattedPosts
       return this.formattedPosts.filter(post => post.user.id === this.userId)
     },
-    isPostOwner() {
-      return (post) => {
-        return this.$store.state.auth.currentUser?.id === post.user.id
-      }
-    }
   },
   methods: {
     async toggleLike(postId) {
@@ -222,8 +216,8 @@ export default {
       this.selectedPost = post
       this.showEditModal = true
     },
-    openDeleteModal(postId) {
-      this.selectedPostId = postId
+    openDeleteModal(post) {
+      this.selectedPost = post
       this.showDeleteModal = true
     },
     openCommentModal(postId) {
@@ -244,6 +238,11 @@ export default {
         [postId]: !this.expandedComments[postId]
       }
     },
+    isPostOwner(post) {
+      const isOwner = this.$store.state.auth.currentUser?.id === post.user.id;
+      const isAdmin = this.$store.getters['isAdmin'];
+      return isOwner || isAdmin;
+    },
     isCommentOwner(comment) {
       return this.$store.state.auth.currentUser?.id === comment.user.id
     },
@@ -259,9 +258,6 @@ export default {
     async handleCommentAdded() {
       await this.$store.dispatch('fetchPostComments', this.post.id)
     },
-    handleCommentUpdated() {
-      // При необходимости можно обновить данные
-    }
   },
   async created() {
     await this.$store.dispatch('fetchPosts')

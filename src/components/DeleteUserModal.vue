@@ -1,8 +1,8 @@
 <template>
   <div v-if="isOpen" class="modal-overlay">
     <div class="modal confirmation-modal">
-      <h2>Удалить пост?</h2>
-      <p>Вы уверены, что хотите удалить этот пост? Это действие нельзя отменить.</p>
+      <h2>Удалить пользователя?</h2>
+      <p>Вы уверены, что хотите удалить этого пользователя? Все связанные данные будут удалены.</p>
 
       <div class="modal-actions">
         <button class="btn-cancel" @click="close">Отмена</button>
@@ -18,9 +18,9 @@
 export default {
   props: {
     isOpen: Boolean,
-    post: Object
+    userId: Number
   },
-  emits: ['close'],
+  emits: ['close', 'deleted'],
   data() {
     return {
       loading: false
@@ -33,21 +33,13 @@ export default {
     async confirmDelete() {
       this.loading = true
       try {
-        const postId = this.post.id;
-        const isAdmin = this.$store.getters['isAdmin'];
-        const isOwnPost = this.post.user.id === this.$store.state.auth.currentUser.id;
-
-        if (isAdmin && !isOwnPost) {
-          await this.$store.dispatch('adminDeletePost', postId);
-        } else {
-          await this.$store.dispatch('deletePost', postId);
-        }
-        window.location.reload()
+        await this.$store.dispatch('deleteUser', this.userId)
+        this.$emit('deleted')
+        this.close()
       } catch (error) {
         console.error('Ошибка удаления:', error)
       } finally {
         this.loading = false
-        this.close()
       }
     }
   }

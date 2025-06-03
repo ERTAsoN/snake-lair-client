@@ -31,6 +31,21 @@
 
         <div class="friend-actions" @click.stop>
           <button
+              v-if="$store.getters.isAdmin"
+              @click="openEditUserModal(user)"
+              class="friend-btn edit-btn"
+          >
+            Редактировать
+          </button>
+          <button
+              v-if="$store.getters.isAdmin"
+              @click="openDeleteUserModal(user.id)"
+              class="friend-btn delete-btn"
+          >
+            Удалить
+          </button>
+
+          <button
               v-if="!isFriend(user)"
               @click="addFriend(user.id)"
               class="friend-btn add-btn"
@@ -49,13 +64,33 @@
       </div>
     </div>
   </div>
+
+  <EditUserModal
+      :isOpen="showEditUserModal"
+      :user="selectedUser"
+      @close="showEditUserModal = false"
+      @updated="loadUsers"
+  />
+  <DeleteUserModal
+      :isOpen="showDeleteUserModal"
+      :userId="selectedUserId"
+      @close="showDeleteUserModal = false"
+      @deleted="loadUsers"
+  />
 </template>
 
 <script>
+import DeleteUserModal from "@/components/DeleteUserModal.vue";
+import EditUserModal from "@/components/EditUserModal.vue";
 import api from '@/api'
 import { SERVER_URL } from "@/config";
 
 export default {
+  components:
+      {
+        EditUserModal,
+        DeleteUserModal
+      },
   data() {
     return {
       users: [],
@@ -65,6 +100,10 @@ export default {
       friends: [],
       sentRequests: [],
       receivedRequests: [],
+      showEditUserModal: false,
+      showDeleteUserModal: false,
+      selectedUser: null,
+      selectedUserId: null,
       serverUrl: SERVER_URL
     }
   },
@@ -83,6 +122,22 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    async openEditUserModal(user) {
+      try {
+        // Загружаем полные данные пользователя
+        const response = await api.get(`/profile/${user.id}`);
+        this.selectedUser = response.data.user;
+        this.showEditUserModal = true;
+      } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+      }
+    },
+
+    openDeleteUserModal(userId) {
+      this.selectedUserId = userId
+      this.showDeleteUserModal = true
     },
 
     async loadFriendData() {
@@ -206,6 +261,7 @@ export default {
   cursor: pointer;
   font-size: 0.9em;
   transition: opacity 0.2s;
+  margin-left:10px;
 }
 
 .add-btn {
